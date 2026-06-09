@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin Wheel - Lucky Draw & Inventory Distribution</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <svg class="gold-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="4 2"></circle>
+                    <path d="M12 2v20M2 12h20M12 12L7 7m5 5l5 5m-5-5l5-5m-5 5L7 17"></path>
+                </svg>
+                <h1>SPIN<span class="gold-text">WHEEL</span></h1>
+            </div>
+            <p class="header-subtitle">Lucky Draw & Inventory Distribution</p>
+            
+            <!-- Quick Sound Toggle for Header -->
+            <div class="header-controls">
+                <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">
+                    <svg id="soundOnIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    <svg id="soundOffIcon" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs (unified switcher) -->
+        <nav class="app-nav-tabs glass-panel">
+            <button class="nav-tab-btn active" data-slide="0">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+                <span>Draw Arena</span>
+            </button>
+            <button class="nav-tab-btn" data-slide="1">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Manage Inventory</span>
+            </button>
+        </nav>
+
+        <!-- Slides Wrapper Carousel -->
+        <div class="slides-wrapper">
+            <div class="slides-container" id="slidesContainer">
+                
+                <!-- PANE 1: Draw Arena -->
+                <div class="slide-pane" id="pane-draw">
+                    
+                    <!-- Left Section: Wheel Arena (Enlarged) -->
+                    <div class="arena-left">
+                        <div class="wheel-stage-container">
+                            <!-- Pointer Anchor Base and Needle Pointer -->
+                            <div class="wheel-pointer-anchor"></div>
+                            <div id="wheelPointer" class="wheel-pointer">
+                                <svg viewBox="0 0 60 70" width="60" height="70">
+                                    <defs>
+                                        <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feGaussianBlur stdDeviation="3" result="blur" />
+                                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                        </filter>
+                                        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#ffe259" />
+                                            <stop offset="100%" stop-color="#ffa751" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M30 65 L5 15 A 25 25 0 1 1 55 15 Z" fill="url(#goldGradient)" filter="url(#goldGlow)" stroke="#3a2305" stroke-width="1.5"></path>
+                                    <circle cx="30" cy="22" r="7" fill="#d946ef" stroke="#ffffff" stroke-width="1"></circle>
+                                </svg>
+                            </div>
+
+                            <!-- Metallic Glowing Wheel Border -->
+                            <div class="wheel-outer-ring">
+                                <div class="wheel-canvas-container">
+                                    <canvas id="wheelCanvas" width="900" height="900"></canvas>
+                                    <!-- Center SPIN Button Overlay -->
+                                    <button id="spinBtn" class="center-spin-btn">
+                                        <span class="spin-btn-shine"></span>
+                                        <span class="spin-btn-text">SPIN</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Draw Recipient Name Input -->
+                        <div class="recipient-input-container glass-panel">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" class="gold-text">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <label for="recipientNameInput">Draw for Participant:</label>
+                            <input type="text" id="recipientNameInput" placeholder="Enter recipient name (optional)..." maxlength="30" autocomplete="off">
+                        </div>
+
+                        <!-- Spin Options & Controls -->
+                        <div class="spin-options glass-panel" style="justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                            <div class="option-item" style="gap: 0.45rem; flex: 0 0 auto;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="removeWinnerToggle">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="option-label" style="font-size: 0.8rem; white-space: nowrap;">Remove if stock 0</span>
+                            </div>
+                            
+                            <!-- SHUFFLE BUTTON -->
+                            <button id="shuffleBtn" class="btn btn-secondary btn-sm" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; flex: 0 0 auto;" title="Shuffle items order on the wheel">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="16 3 21 3 21 8"></polyline>
+                                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                                    <polyline points="21 16 21 21 16 21"></polyline>
+                                </svg>
+                                <span>Shuffle</span>
+                            </button>
+                            
+                            <div class="option-item" style="gap: 0.45rem; flex: 0 0 auto;">
+                                <span class="option-label" style="font-size: 0.8rem; white-space: nowrap;">Duration:</span>
+                                <div class="slider-container">
+                                    <input type="range" id="durationSlider" min="3" max="12" value="6" step="1">
+                                    <span id="durationValue">6s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Section: Queue & History Panel -->
+                    <div class="panel glass-panel arena-right">
+                        <!-- Upper Section: Participant Queue -->
+                        <div class="queue-section-wrapper" style="display: flex; flex-direction: column; max-height: 50%;">
+                            <div class="panel-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--glass-border);">
+                                <h2>Participant Queue (<span id="queueCount">0</span>)</h2>
+                                <div class="panel-header-actions">
+                                    <button id="importQueueBtn" class="btn btn-secondary btn-sm" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" title="Import participant queue list from Excel">
+                                        Import
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="panel-body" style="padding: 1rem 1.25rem; max-height: 180px; overflow-y: auto;">
+                                <div class="list-container" style="min-height: 0;">
+                                    <div id="emptyQueueMessage" class="empty-state" style="padding: 1.5rem 0.5rem;">
+                                        <p style="font-size: 0.85rem; margin-top: 0;">Queue is empty.</p>
+                                        <span class="empty-subtext" style="font-size: 0.75rem;">Paste names from Excel to automate.</span>
+                                    </div>
+                                    <ul id="queueList" class="item-list queue-list">
+                                        <!-- Populated by JS -->
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="panel-footer" style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--glass-border); display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button id="shuffleQueueBtn" class="btn btn-secondary btn-sm btn-flex" style="font-size: 0.75rem;" title="Shuffle participant queue order">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="16 3 21 3 21 8"></polyline>
+                                        <line x1="4" y1="20" x2="21" y2="3"></line>
+                                        <polyline points="21 16 21 21 16 21"></polyline>
+                                    </svg>
+                                    Shuffle Queue
+                                </button>
+                                <button id="clearQueueBtn" class="btn btn-muted btn-sm" style="font-size: 0.75rem; padding: 0.4rem 0.65rem;">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Divider line -->
+                        <div style="border-top: 1px solid var(--glass-border); flex: 0 0 auto;"></div>
+
+                        <!-- Lower Section: History panel -->
+                        <div class="history-section-wrapper" style="flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+                            <div class="panel-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--glass-border);">
+                                <h2>Draw History</h2>
+                            </div>
+                            
+                            <div class="panel-body" style="padding: 1rem 1.25rem; overflow-y: auto;">
+                                <div class="history-container" style="min-height: 0;">
+                                    <div id="emptyHistoryMessage" class="empty-state" style="padding: 1.5rem 0.5rem;">
+                                        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1" class="muted-icon">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 8v4l3 3"></path>
+                                        </svg>
+                                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">No items drawn yet.</p>
+                                    </div>
+                                    <ul id="historyList" class="item-list history-list">
+                                        <!-- Populated by JS -->
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="panel-footer button-group" style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--glass-border);">
+                                <button id="exportCsvBtn" class="btn btn-secondary btn-flex btn-sm">
+                                    Export CSV
+                                </button>
+                                <button id="clearHistoryBtn" class="btn btn-muted btn-sm">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PANE 2: Manage Inventory -->
+                <div class="slide-pane" id="pane-inventory">
+                    
+                    <!-- Left Section: Items List -->
+                    <div class="panel glass-panel inventory-left">
+                        <div class="panel-header">
+                            <h2>Items List (<span id="participantCount">0</span>)</h2>
+                        </div>
+                        
+                        <div class="panel-body">
+                            <div class="list-container">
+                                <div id="emptyListMessage" class="empty-state">
+                                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" class="muted-icon">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <p>No items added yet.</p>
+                                    <span class="empty-subtext">Add items individually or import a list to start.</span>
+                                </div>
+                                <ul id="participantsList" class="item-list">
+                                    <!-- Populated by JS -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="panel-footer">
+                            <button id="resetParticipantsBtn" class="btn btn-danger btn-block">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Reset Items
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Section: Inventory Controls -->
+                    <div class="panel glass-panel inventory-right">
+                        <div class="panel-header">
+                            <h2>Inventory Panel</h2>
+                        </div>
+                        
+                        <div class="panel-body" style="gap: 2rem;">
+                            <!-- Form to Add Item -->
+                            <div class="inventory-control-card glass-card">
+                                <h3>Add New Item</h3>
+                                <form id="addParticipantForm" class="add-form" style="margin-top: 1rem;">
+                                    <div class="form-group" style="margin-bottom: 1rem;">
+                                        <label for="newParticipantInput">Item Name</label>
+                                        <input type="text" id="newParticipantInput" placeholder="Item name..." maxlength="30" required autocomplete="off">
+                                    </div>
+                                    <div class="form-row" style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="newStockInput">Starting Stock</label>
+                                            <input type="number" id="newStockInput" placeholder="Stock" min="1" max="9999" value="5" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" style="height: 44px; padding: 0.5rem 1.25rem;">
+                                            Add Item
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Bulk Import Card -->
+                            <div class="inventory-control-card glass-card">
+                                <h3>Bulk Import Items</h3>
+                                <p class="modal-instruction" style="margin: 0.5rem 0 1rem 0;">Directly load a line-separated text list of items with optional stock counts.</p>
+                                <button id="bulkImportBtn" class="btn btn-secondary btn-block">Open Bulk Importer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: Bulk Import Modal -->
+    <div id="bulkImportModal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Bulk Import Items</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">Enter item names below, one per line. You can specify starting stock with a comma (e.g. "Gift Card, 10"). Default stock is 5.</p>
+                <textarea id="bulkNamesTextarea" rows="10" placeholder="Royale Coffee Mug, 15&#10;VIP Gold Pass, 3&#10;T-Shirt..."></textarea>
+                <div class="textarea-counter"><span id="textareaLineCount">0</span> items detected</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel-btn">Cancel</button>
+                <button id="importSubmitBtn" class="btn btn-primary">Import Items</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Edit Item Modal -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <form id="editForm">
+                <div class="modal-header">
+                    <h3>Edit Item</h3>
+                    <button type="button" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editParticipantIndex">
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label for="editParticipantInput">Item Name</label>
+                        <input type="text" id="editParticipantInput" maxlength="30" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="editStockInput">Stock Count</label>
+                        <input type="number" id="editStockInput" min="0" max="9999" required placeholder="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Winner Celebration Overlay & Banner -->
+    <div id="winnerCelebrationModal" class="modal-overlay winner-celebration-overlay">
+        <!-- Confetti Canvas -->
+        <canvas id="confettiCanvas"></canvas>
+        
+        <div class="winner-modal-card">
+            <div class="trophy-emitter">
+                <svg viewBox="0 0 24 24" width="72" height="72" fill="none" class="gold-trophy">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6Z" fill="url(#goldGradient)" stroke="#825102" stroke-width="1.5"></path>
+                </svg>
+            </div>
+            
+            <div class="winner-announcement">
+                <span class="winner-label">CONGRATULATIONS!</span>
+                <h3 id="recipientWinnerName" class="recipient-winner-name" style="font-size: 1.65rem; color: #ffffff; margin-bottom: 0.5rem; font-weight: 600; word-break: break-word;">John Doe</h3>
+                <p class="winner-congrats" style="margin-bottom: 1.25rem;">You won:</p>
+                <h2 id="winnerNameDisplay" class="winner-name">Golden Ticket</h2>
+                <p class="winner-congrats">Stock has been decremented. Remaining: <span id="winnerStockDisplay" class="gold-text">0</span></p>
+            </div>
+            
+            <div class="winner-actions">
+                <button id="winnerKeepBtn" class="btn btn-secondary">Keep remaining stock</button>
+                <button id="winnerRemoveBtn" class="btn btn-danger">Set stock to 0</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Queue Import Modal -->
+    <div id="queueImportModal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Import Participant Queue</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">Paste participant names below (copy-paste from Excel or write one name per line). They will draw prizes in this sequence.</p>
+                <textarea id="queueNamesTextarea" rows="10" placeholder="Alice&#10;Bob&#10;Charlie&#10;David..."></textarea>
+                <div class="textarea-counter"><span id="textareaQueueCount">0</span> names detected</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel-btn">Cancel</button>
+                <button id="queueImportSubmitBtn" class="btn btn-primary">Load Queue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- script.js -->
+    <script src="script.js"></script>
+</body>
+</html>
