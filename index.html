@@ -11,9 +11,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Background glows -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+    <!-- Background glows (Interactive Parallax Aurora) -->
+    <div class="aurora-container" id="auroraContainer">
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <div class="bg-glow bg-glow-3"></div>
+        <div class="bg-glow bg-glow-4"></div>
+    </div>
 
     <div class="app-container">
         <!-- Header -->
@@ -188,6 +192,13 @@
                             </div>
                             
                             <div class="panel-body" style="padding: 1rem 1.25rem; flex: 1; overflow-y: auto;">
+                                <!-- Single Queue Member Add Form -->
+                                <form id="addQueueMemberForm" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: var(--border-radius-sm); border: 1px solid var(--glass-border); align-items: center;">
+                                    <input type="text" id="newQueueNameInput" placeholder="Add name to queue..." required style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem; height: 32px; margin: 0;">
+                                    <input type="number" id="newQueuePosInput" placeholder="Pos" min="1" style="width: 60px; padding: 0.4rem 0.6rem; font-size: 0.8rem; height: 32px; margin: 0;">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; height: 32px; flex-shrink: 0;">+ Add</button>
+                                </form>
+
                                 <div class="list-container" style="min-height: 0;">
                                     <div id="emptyQueueMessage" class="empty-state" style="padding: 1.5rem 0.5rem;">
                                         <p style="font-size: 0.85rem; margin-top: 0;">Queue is empty.</p>
@@ -348,10 +359,55 @@
         
         <div class="winner-modal-card">
             <div class="trophy-emitter">
-                <svg viewBox="0 0 24 24" width="72" height="72" fill="none" class="gold-trophy">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                    <path d="M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                    <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6Z" fill="url(#goldGradient)" stroke="#825102" stroke-width="1.5"></path>
+                <svg viewBox="0 0 100 100" width="90" height="90" class="gold-trophy" style="filter: drop-shadow(0 0 15px var(--gold-glow)); animation: bounceTrophy 2.5s infinite ease-in-out;">
+                    <defs>
+                        <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fff5c0" />
+                            <stop offset="30%" stop-color="#ffe259" />
+                            <stop offset="70%" stop-color="#ffa751" />
+                            <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                        <linearGradient id="goldDark" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#78350f" />
+                            <stop offset="50%" stop-color="#b45309" />
+                            <stop offset="100%" stop-color="#f59e0b" />
+                        </linearGradient>
+                        <linearGradient id="baseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#1e293b" />
+                            <stop offset="100%" stop-color="#0f172a" />
+                        </linearGradient>
+                        <linearGradient id="highlightGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6" />
+                            <stop offset="40%" stop-color="#ffffff" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Trophy Handles (Left and Right) -->
+                    <path d="M22 30 C10 30 10 52 25 55 C23 42 22 35 22 30 Z" fill="url(#goldLight)" stroke="#78350f" stroke-width="1.5" />
+                    <path d="M78 30 C90 30 90 52 75 55 C77 42 78 35 78 30 Z" fill="url(#goldLight)" stroke="#78350f" stroke-width="1.5" />
+                    <path d="M25 34 C16 34 16 48 26 51" fill="none" stroke="#78350f" stroke-width="1.5" />
+                    <path d="M75 34 C84 34 84 48 74 51" fill="none" stroke="#78350f" stroke-width="1.5" />
+
+                    <!-- Main Cup Body -->
+                    <path d="M25 24 L75 24 C75 24 75 55 50 64 C25 55 25 24 25 24 Z" fill="url(#goldLight)" stroke="#78350f" stroke-width="1.5" />
+                    
+                    <!-- Inside Rim Shadow -->
+                    <ellipse cx="50" cy="24" rx="25" ry="4" fill="url(#goldDark)" stroke="#78350f" stroke-width="1.5" />
+                    
+                    <!-- Cup Stem / Neck -->
+                    <path d="M40 60 L60 60 L56 76 L44 76 Z" fill="url(#goldLight)" stroke="#78350f" stroke-width="1.5" />
+                    <ellipse cx="50" cy="76" rx="10" ry="2.5" fill="url(#goldDark)" stroke="#78350f" stroke-width="1" />
+                    
+                    <!-- Pedestal Base (Steps) -->
+                    <path d="M36 78 L64 78 L66 84 L34 84 Z" fill="url(#goldLight)" stroke="#78350f" stroke-width="1.5" />
+                    <rect x="28" y="84" width="44" height="12" rx="2" fill="url(#baseGrad)" stroke="#78350f" stroke-width="1.5" />
+                    <rect x="38" y="87" width="24" height="6" rx="1" fill="url(#goldLight)" stroke="#b45309" stroke-width="1" />
+                    
+                    <!-- Cup Glossy Highlight Overlay -->
+                    <path d="M26 25 L50 25 C50 25 38 48 50 63 C26 54 26 25 26 25 Z" fill="url(#highlightGrad)" pointer-events="none" />
+                    
+                    <!-- Decorative Star on Center -->
+                    <path d="M50 34 L52 39 L57 39 L53 42 L55 47 L50 44 L45 47 L47 42 L43 39 L48 39 Z" fill="#ffffff" filter="drop-shadow(0 0 4px #ffffff)" />
                 </svg>
             </div>
             
@@ -363,9 +419,9 @@
                 <p class="winner-congrats">Stock has been decremented. Remaining: <span id="winnerStockDisplay" class="gold-text">0</span></p>
             </div>
             
-            <div class="winner-actions">
-                <button id="winnerKeepBtn" class="btn btn-secondary">Keep remaining stock</button>
-                <button id="winnerRemoveBtn" class="btn btn-danger">Set stock to 0</button>
+            <div class="winner-actions" style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; width: 100%;">
+                <button id="winnerKeepBtn" class="btn btn-primary" style="flex: 1; padding: 0.85rem 1.5rem; font-size: 0.95rem;">Next</button>
+                <button id="winnerCancelBtn" class="btn btn-danger btn-sm" style="flex: 0 0 auto; padding: 0.5rem 0.85rem; font-size: 0.8rem; height: 38px; margin: 0;" title="Revert stock and history updates for this draw">Cancel Draw</button>
             </div>
         </div>
     </div>

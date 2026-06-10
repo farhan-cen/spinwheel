@@ -15,6 +15,7 @@ const DEFAULT_ITEMS = [
 let items = [];
 let winnersHistory = [];
 let participantQueue = []; // Participant Queue array
+let draggedIndex = null; // Dragged item state for queue list reordering
 let isSpinning = false;
 let soundEnabled = true;
 
@@ -518,6 +519,11 @@ function disableButtons(disable) {
 
 // Handle landed item: decrement stock and open modal
 function handleWinnerDrawn(activeWinnerIndex) {
+    // Snapshot state before any mutations for "Cancel Draw" rollback
+    const itemsSnapshot = JSON.parse(JSON.stringify(items));
+    const historySnapshot = JSON.parse(JSON.stringify(winnersHistory));
+    const queueSnapshot = JSON.parse(JSON.stringify(participantQueue));
+
     const activeItems = getActiveItems();
     const winningActiveItem = activeItems[activeWinnerIndex];
     const originalIndex = winningActiveItem.originalIndex;
@@ -576,11 +582,11 @@ function handleWinnerDrawn(activeWinnerIndex) {
     playCelebrationSound();
     initConfetti();
     
-    const removeBtn = document.getElementById("winnerRemoveBtn");
     const keepBtn = document.getElementById("winnerKeepBtn");
+    const cancelBtn = document.getElementById("winnerCancelBtn");
     
     // Choice button handlers
-    const handleClose = (forceDelete) => {
+    const handleClose = () => {
         modal.classList.remove("open");
         stopConfetti();
         
@@ -594,28 +600,35 @@ function handleWinnerDrawn(activeWinnerIndex) {
             recipientInput.value = "";
         }
         
-        if (forceDelete && !isCompletelyDeleted) {
-            // Force stock to 0
-            if (items[originalIndex]) {
-                if (shouldRemoveOnZero) {
-                    items.splice(originalIndex, 1);
-                } else {
-                    items[originalIndex].stock = 0;
-                }
-                saveState();
-                renderItemsList();
-                updateCounts();
-                drawWheel();
-            }
-        }
-        
         // Clean handlers
-        removeBtn.onclick = null;
         keepBtn.onclick = null;
+        cancelBtn.onclick = null;
     };
     
-    removeBtn.onclick = () => handleClose(true);
-    keepBtn.onclick = () => handleClose(false);
+    keepBtn.onclick = () => handleClose();
+    
+    cancelBtn.onclick = () => {
+        // Rollback state from snapshots
+        items = itemsSnapshot;
+        winnersHistory = historySnapshot;
+        participantQueue = queueSnapshot;
+        
+        saveState();
+        
+        // Refresh UIs
+        renderItemsList();
+        renderWinnersHistory();
+        renderQueueList();
+        updateCounts();
+        drawWheel();
+        
+        modal.classList.remove("open");
+        stopConfetti();
+        
+        // Clean handlers
+        keepBtn.onclick = null;
+        cancelBtn.onclick = null;
+    };
 }
 
 // --- Fisher-Yates Item Randomizer ---
@@ -637,6 +650,9 @@ function shuffleWheelItems() {
 }
 
 // --- Custom Confetti Particle System ---
+let isSpawningConfetti = false;
+let confettiSpawnTimer = null;
+
 function initConfetti() {
     const canvas = document.getElementById("confettiCanvas");
     if (!canvas) return;
@@ -653,12 +669,12 @@ function initConfetti() {
     confettiParticles = [];
     const colors = ["#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#10b981", "#3b82f6", "#ffffff"];
     
-    const addCannonBlast = (startX, startY, angleDeg) => {
-        const count = 75;
+    const addCannonBlast = (startX, startY, angleDeg, isInitial = false) => {
+        const count = isInitial ? 90 : 4; // Dense initial blast, smaller continuous stream
         const angleRad = angleDeg * Math.PI / 180;
         
         for (let i = 0; i < count; i++) {
-            const speed = 15 + Math.random() * 22;
+            const speed = isInitial ? (16 + Math.random() * 26) : (10 + Math.random() * 18);
             const spreadAngle = angleRad + (Math.random() - 0.5) * 0.45;
             
             confettiParticles.push({
@@ -672,14 +688,55 @@ function initConfetti() {
                 rotation: Math.random() * 360,
                 rotationSpeed: (Math.random() - 0.5) * 10,
                 opacity: 1,
-                gravity: 0.35,
+                gravity: 0.32,
                 friction: 0.96
             });
         }
     };
     
-    addCannonBlast(-20, canvas.height + 20, -55);
-    addCannonBlast(canvas.width + 20, canvas.height + 20, -125);
+    // Initial blast
+    addCannonBlast(-20, canvas.height + 20, -55, true);
+    addCannonBlast(canvas.width + 20, canvas.height + 20, -125, true);
+    
+    // Set up continuous spawning for 5 seconds
+    isSpawningConfetti = true;
+    if (confettiSpawnTimer) clearInterval(confettiSpawnTimer);
+    
+    confettiSpawnTimer = setInterval(() => {
+        if (isSpawningConfetti) {
+            // Left cannon stream
+            addCannonBlast(-20, canvas.height + 20, -50, false);
+            // Right cannon stream
+            addCannonBlast(canvas.width + 20, canvas.height + 20, -130, false);
+            
+            // Shower from top center
+            for (let i = 0; i < 2; i++) {
+                confettiParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    size: 5 + Math.random() * 8,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    shape: Math.random() > 0.5 ? "circle" : "square",
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: 2 + Math.random() * 5,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 8,
+                    opacity: 1,
+                    gravity: 0.25,
+                    friction: 0.98
+                });
+            }
+        }
+    }, 100);
+    
+    // Stop spawning after 5 seconds (5000ms)
+    setTimeout(() => {
+        isSpawningConfetti = false;
+        if (confettiSpawnTimer) {
+            clearInterval(confettiSpawnTimer);
+            confettiSpawnTimer = null;
+        }
+    }, 5000);
     
     function animateParticles() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -697,8 +754,9 @@ function initConfetti() {
             p.y += p.vy;
             p.rotation += p.rotationSpeed;
             
-            if (p.vy > 1) {
-                p.opacity -= 0.008;
+            // Slow fade out after falling down a bit
+            if (p.vy > 0.5) {
+                p.opacity -= 0.007; // Slower fade out
             }
             
             if (p.opacity > 0 && p.y < canvas.height && p.x > -50 && p.x < canvas.width + 50) {
@@ -721,7 +779,8 @@ function initConfetti() {
             }
         }
         
-        if (active) {
+        // Keep animating if there are active particles or we are still spawning
+        if (active || isSpawningConfetti) {
             confettiAnimationId = requestAnimationFrame(animateParticles);
         }
     }
@@ -731,6 +790,11 @@ function initConfetti() {
 }
 
 function stopConfetti() {
+    isSpawningConfetti = false;
+    if (confettiSpawnTimer) {
+        clearInterval(confettiSpawnTimer);
+        confettiSpawnTimer = null;
+    }
     if (confettiAnimationId) {
         cancelAnimationFrame(confettiAnimationId);
         confettiAnimationId = null;
@@ -907,7 +971,6 @@ function renderWinnersHistory() {
         list.appendChild(li);
     });
 }
-
 // --- Participant Queue Render & Operations ---
 function renderQueueList() {
     const list = document.getElementById("queueList");
@@ -930,15 +993,83 @@ function renderQueueList() {
     } else {
         emptyState.classList.add("hidden");
         recipientInput.value = participantQueue[0];
-        recipientInput.readOnly = true; // Lock it to prevent manual override during queue draws
+        recipientInput.readOnly = false; // Keep editable so user can modify directly
     }
     
     participantQueue.forEach((name, index) => {
         const li = document.createElement("li");
         li.className = "queue-item";
+        li.draggable = true; // Enable Drag and Drop
+        
         if (index === 0) {
             li.classList.add("queue-active");
         }
+        
+        // HTML5 Drag & Drop Event Listeners
+        li.addEventListener("dragstart", (e) => {
+            if (isSpinning) {
+                e.preventDefault();
+                return;
+            }
+            draggedIndex = index;
+            li.classList.add("dragging");
+            list.classList.add("dragging-active");
+            e.dataTransfer.effectAllowed = "move";
+        });
+        
+        li.addEventListener("dragover", (e) => {
+            if (draggedIndex !== index) {
+                e.preventDefault();
+                const rect = li.getBoundingClientRect();
+                const relY = e.clientY - rect.top;
+                if (relY < rect.height / 2) {
+                    li.classList.add("drag-over-top");
+                    li.classList.remove("drag-over-bottom");
+                } else {
+                    li.classList.add("drag-over-bottom");
+                    li.classList.remove("drag-over-top");
+                }
+            }
+        });
+        
+        li.addEventListener("dragleave", () => {
+            li.classList.remove("drag-over-top", "drag-over-bottom");
+        });
+        
+        li.addEventListener("drop", (e) => {
+            e.preventDefault();
+            li.classList.remove("drag-over-top", "drag-over-bottom");
+            if (draggedIndex !== null && draggedIndex !== index) {
+                const rect = li.getBoundingClientRect();
+                const relY = e.clientY - rect.top;
+                const insertAfter = relY >= rect.height / 2;
+                
+                const draggedItem = participantQueue[draggedIndex];
+                const targetItem = participantQueue[index];
+                
+                // Remove the dragged item
+                participantQueue.splice(draggedIndex, 1);
+                
+                // Find where target item is now
+                const newTargetIndex = participantQueue.indexOf(targetItem);
+                
+                // Calculate target insertion index
+                const finalIndex = insertAfter ? newTargetIndex + 1 : newTargetIndex;
+                participantQueue.splice(finalIndex, 0, draggedItem);
+                
+                saveState();
+                renderQueueList();
+            }
+        });
+        
+        li.addEventListener("dragend", () => {
+            li.classList.remove("dragging");
+            list.classList.remove("dragging-active");
+            draggedIndex = null;
+            document.querySelectorAll(".queue-item").forEach(item => {
+                item.classList.remove("drag-over-top", "drag-over-bottom");
+            });
+        });
         
         const badge = document.createElement("span");
         badge.className = "queue-index-badge";
@@ -954,6 +1085,61 @@ function renderQueueList() {
         const actionsDiv = document.createElement("div");
         actionsDiv.className = "item-actions";
         
+        // Edit Button
+        const editBtn = document.createElement("button");
+        editBtn.className = "action-btn edit-btn";
+        editBtn.title = "Edit Participant Name";
+        editBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        `;
+        editBtn.onclick = (e) => {
+            e.stopPropagation(); // Stop drag event from firing
+            const newName = prompt("Edit Participant Name:", name);
+            if (newName !== null) {
+                const trimmed = newName.trim();
+                if (trimmed) {
+                    participantQueue[index] = trimmed;
+                    saveState();
+                    renderQueueList();
+                }
+            }
+        };
+        
+        // Move / Position Edit Button
+        const posBtn = document.createElement("button");
+        posBtn.className = "action-btn pos-btn";
+        posBtn.title = "Change Position Urutan";
+        posBtn.style.color = "var(--gold-primary)";
+        posBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="8 17 12 21 16 17"></polyline>
+                <polyline points="8 7 12 3 16 7"></polyline>
+                <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg>
+        `;
+        posBtn.onclick = (e) => {
+            e.stopPropagation(); // Stop drag event from firing
+            const posStr = prompt(`Enter new position for "${name}" (1 to ${participantQueue.length}):`, index + 1);
+            if (posStr !== null) {
+                const newPos = parseInt(posStr);
+                if (!isNaN(newPos) && newPos >= 1 && newPos <= participantQueue.length) {
+                    const targetIndex = newPos - 1;
+                    if (targetIndex !== index) {
+                        const item = participantQueue[index];
+                        participantQueue.splice(index, 1);
+                        participantQueue.splice(targetIndex, 0, item);
+                        saveState();
+                        renderQueueList();
+                    }
+                } else {
+                    alert(`Invalid position! Please enter a number between 1 and ${participantQueue.length}.`);
+                }
+            }
+        };
+        
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "action-btn delete-btn";
         deleteBtn.title = "Remove from Queue";
@@ -963,8 +1149,13 @@ function renderQueueList() {
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
         `;
-        deleteBtn.onclick = () => removeFromQueue(index);
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation(); // Stop drag event from firing
+            removeFromQueue(index);
+        };
         
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(posBtn);
         actionsDiv.appendChild(deleteBtn);
         
         li.appendChild(badge);
@@ -1207,6 +1398,30 @@ function initEventListeners() {
         updateCounts();
     });
 
+    // Real-time update from "Draw for Participant" input field into Queue
+    const recipientInput = document.getElementById("recipientNameInput");
+    recipientInput.addEventListener("input", () => {
+        const val = recipientInput.value.trim();
+        if (participantQueue.length > 0) {
+            participantQueue[0] = val; // update first element of queue
+            saveState();
+            
+            // Dynamically update the first queue item name text in DOM directly to avoid losing focus
+            const activeQueueName = document.querySelector("#queueList .queue-active .queue-name");
+            if (activeQueueName) {
+                activeQueueName.textContent = (val || "Active Player") + " (Active)";
+            }
+        }
+    });
+
+    // Interactive Aurora Parallax effect on mousemove
+    document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 45; // Max 45px translation
+        const y = (e.clientY / window.innerHeight - 0.5) * 45;
+        document.documentElement.style.setProperty('--bg-tilt-x', `${x}px`);
+        document.documentElement.style.setProperty('--bg-tilt-y', `${y}px`);
+    });
+
     // Participant Queue Import Open
     const importQueueBtn = document.getElementById("importQueueBtn");
     const queueTextarea = document.getElementById("queueNamesTextarea");
@@ -1236,6 +1451,42 @@ function initEventListeners() {
         saveState();
         renderQueueList();
         closeModal("queueImportModal");
+    });
+    
+    // Single Participant Queue Addition Form Submit
+    document.getElementById("addQueueMemberForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById("newQueueNameInput");
+        const posInput = document.getElementById("newQueuePosInput");
+        
+        const name = nameInput.value.trim();
+        const posVal = posInput.value.trim();
+        
+        if (name) {
+            if (participantQueue.length >= 100) {
+                alert("Participant Queue limit reached! Max 100 people.");
+                return;
+            }
+            
+            if (posVal) {
+                const pos = parseInt(posVal);
+                if (!isNaN(pos) && pos >= 1) {
+                    const targetIndex = Math.min(pos - 1, participantQueue.length);
+                    participantQueue.splice(targetIndex, 0, name);
+                } else {
+                    participantQueue.push(name);
+                }
+            } else {
+                participantQueue.push(name);
+            }
+            
+            // Clear inputs
+            nameInput.value = "";
+            posInput.value = "";
+            
+            saveState();
+            renderQueueList();
+        }
     });
     
     // Shuffle Queue
