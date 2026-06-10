@@ -61,6 +61,55 @@ document.addEventListener("DOMContentLoaded", () => {
             drawWheel(); // redraw to pulse bulbs when static
         }
     }, 300);
+
+    // --- Login Gate Authentication ---
+    const loginOverlay = document.getElementById("loginOverlay");
+    const loginForm = document.getElementById("loginForm");
+    const loginUsernameInput = document.getElementById("loginUsername");
+    const loginPasswordInput = document.getElementById("loginPassword");
+    const loginErrorMsg = document.getElementById("loginErrorMsg");
+    const loginCard = document.querySelector(".login-card");
+
+    const checkAuth = () => {
+        const isAuth = sessionStorage.getItem("spinwheel_auth") === "true";
+        if (isAuth) {
+            loginOverlay.classList.add("hidden");
+        } else {
+            loginOverlay.classList.remove("hidden");
+        }
+    };
+
+    checkAuth();
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            if (username === "admin" && password === "dupi123") {
+                sessionStorage.setItem("spinwheel_auth", "true");
+                loginOverlay.classList.add("hidden");
+                loginErrorMsg.classList.add("hidden");
+                loginUsernameInput.value = "";
+                loginPasswordInput.value = "";
+            } else {
+                loginErrorMsg.classList.remove("hidden");
+                loginCard.classList.remove("shake");
+                void loginCard.offsetWidth; // Force reflow
+                loginCard.classList.add("shake");
+                loginPasswordInput.value = "";
+            }
+        });
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            sessionStorage.removeItem("spinwheel_auth");
+            checkAuth();
+        });
+    }
 });
 
 // --- State Management Helpers ---
