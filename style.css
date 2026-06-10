@@ -104,14 +104,25 @@ body {
 
 .header-logo h1 {
     font-size: 2.25rem;
-    font-weight: 800;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.header-logo-img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.45));
 }
 
 .gold-text {
     color: var(--gold-primary);
     text-shadow: 0 0 10px var(--gold-glow);
-    font-weight: 400;
+    font-weight: 700;
     font-family: 'Playfair Display', serif;
     font-style: italic;
     margin-left: 0.25rem;
@@ -129,7 +140,7 @@ body {
 }
 
 .header-subtitle {
-    color: var(--text-muted);
+    color: #cbd5e1;
     font-size: 0.95rem;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -687,14 +698,14 @@ textarea {
 
 .wheel-stage-container {
     position: relative;
-    width: 100%;
+    width: min(100%, calc(100vh - 300px));
+    max-width: 630px;
     height: auto;
     aspect-ratio: 1 / 1;
-    max-width: min(630px, calc(100vh - 350px)); /* Keeps wheel perfectly circular and fits desktop height */
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1 1 auto;
+    flex: 0 0 auto; /* Stop flex stretching to keep perfectly circular */
 }
 
 /* Decorative Pointer Support Peg Base */
@@ -1266,6 +1277,7 @@ canvas#confettiCanvas {
     }
     
     .wheel-stage-container {
+        width: 100%;
         height: auto;
         max-height: none;
         max-width: 450px; /* Scaling down for smaller displays */

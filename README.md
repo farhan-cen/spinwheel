@@ -1,6 +1,6 @@
-# Premium Spin Wheel - Lucky Draw & Inventory Distribution
+# Dupoin Futures Indonesia - Official Lucky Draw Platform
 
-A premium, casino-style interactive **Spin Wheel** web application featuring a hardware-accelerated 2-slide carousel, real-time inventory count integration, an automated participant draw queue, and synthesized sound effects.
+A premium, casino-style interactive **Spin Wheel** lucky draw web application tailored for **Dupoin Futures Indonesia**, featuring a hardware-accelerated 2-slide carousel, real-time inventory count integration, an automated participant draw queue, and synthesized sound effects.
 
 ## 🌟 Live Demo
 Host this project easily on **Vercel**, **Netlify**, or **GitHub Pages** by simply deploying the directory.
