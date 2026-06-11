@@ -22,7 +22,16 @@ const db = getDatabase(app);
 window.firebaseDB = db;
 
 window.saveToFirebase = async function(data){
-    await set(ref(db, "spinwheel"), data);
+    try{
+        console.log("Firebase write start");
+
+        await set(ref(db, "spinwheel"), data);
+
+        console.log("Firebase write success");
+    }
+    catch(err){
+        console.error("Firebase write failed", err);
+    }
 };
 
 window.loadFromFirebase = async function(){

@@ -114,20 +114,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- State Management Helpers ---
 async function saveState() {
+
+    console.log("saveState called");
+
     localStorage.setItem("spinwheel_items_v2", JSON.stringify(items));
     localStorage.setItem("spinwheel_history", JSON.stringify(winnersHistory));
     localStorage.setItem("spinwheel_queue", JSON.stringify(participantQueue));
     localStorage.setItem("spinwheel_sound", JSON.stringify(soundEnabled));
-    localStorage.setItem("spinwheel_remove_on_zero", JSON.stringify(document.getElementById("removeWinnerToggle").checked));
-if (window.saveToFirebase) {
-    window.saveToFirebase({
-        items,
-        winnersHistory,
-        participantQueue,
-        soundEnabled,
-        updatedAt: Date.now()
-    });
-}
+
+    if (window.saveToFirebase) {
+
+        console.log("Sending to Firebase...", {
+            items,
+            winnersHistory,
+            participantQueue,
+            soundEnabled
+        });
+
+        window.saveToFirebase({
+            items,
+            winnersHistory,
+            participantQueue,
+            soundEnabled,
+            updatedAt: Date.now()
+        });
+    }
 }
 
 function loadState() {
