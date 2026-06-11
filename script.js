@@ -34,11 +34,12 @@ let confettiAnimationId = null;
 let marqueePhase = 0;
 
 // --- Initialize Application ---
-document.addEventListener("DOMContentLoaded", () => {
-    loadState();
+document.addEventListener("DOMContentLoaded", async () => {
+
+    await loadState();
     if (items.length === 0) {
         items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
-        saveState();
+        await saveState();
     }
     
     // Bind UI Event Listeners
@@ -141,8 +142,40 @@ async function saveState() {
     }
 }
 
-function loadState() {
+async function loadState() {
+
     try {
+
+        // Coba ambil dari Firebase dulu
+        if (window.loadFromFirebase) {
+
+            const firebaseData = await window.loadFromFirebase();
+
+            if (firebaseData) {
+
+                console.log("Loaded from Firebase", firebaseData);
+
+                if (firebaseData.items)
+                    items = firebaseData.items;
+
+                if (firebaseData.winnersHistory)
+                    winnersHistory = firebaseData.winnersHistory;
+
+                if (firebaseData.participantQueue)
+                    participantQueue = firebaseData.participantQueue;
+
+                if (firebaseData.soundEnabled !== undefined) {
+                    soundEnabled = firebaseData.soundEnabled;
+                    updateSoundIcon();
+                }
+
+                return;
+            }
+        }
+
+        // Fallback ke localStorage
+        console.log("Firebase kosong, pakai localStorage");
+
         const savedItems = localStorage.getItem("spinwheel_items_v2");
         if (savedItems) items = JSON.parse(savedItems);
 
@@ -158,12 +191,10 @@ function loadState() {
             updateSoundIcon();
         }
 
-        const savedRemoveOnZero = localStorage.getItem("spinwheel_remove_on_zero");
-        if (savedRemoveOnZero !== null) {
-            document.getElementById("removeWinnerToggle").checked = JSON.parse(savedRemoveOnZero);
-        }
     } catch (e) {
-        console.error("Failed to load local storage state:", e);
+
+        console.error("Failed to load state:", e);
+
     }
 }
 
