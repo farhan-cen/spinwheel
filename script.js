@@ -113,12 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- State Management Helpers ---
-function saveState() {
+async function saveState() {
     localStorage.setItem("spinwheel_items_v2", JSON.stringify(items));
     localStorage.setItem("spinwheel_history", JSON.stringify(winnersHistory));
     localStorage.setItem("spinwheel_queue", JSON.stringify(participantQueue));
     localStorage.setItem("spinwheel_sound", JSON.stringify(soundEnabled));
     localStorage.setItem("spinwheel_remove_on_zero", JSON.stringify(document.getElementById("removeWinnerToggle").checked));
+if (window.saveToFirebase) {
+    window.saveToFirebase({
+        items,
+        winnersHistory,
+        participantQueue,
+        soundEnabled,
+        updatedAt: Date.now()
+    });
+}
 }
 
 function loadState() {

@@ -1,5 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  get
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAGZD3jwqGGeQyNQ3fuKWLML01jjfut94c",
@@ -15,5 +20,14 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 window.firebaseDB = db;
+
+window.saveToFirebase = async function(data){
+    await set(ref(db, "spinwheel"), data);
+};
+
+window.loadFromFirebase = async function(){
+    const snapshot = await get(ref(db, "spinwheel"));
+    return snapshot.exists() ? snapshot.val() : null;
+};
 
 console.log("Firebase Connected");
